@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django ecommerce website</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar-brand { font-weight: bold; color: #007bff !important; }
+        .product-title { text-align: center; margin: 40px 0 20px 0; font-size: 2rem; font-weight: 500; }
+        .card img { max-height: 220px; object-fit: contain; }
+        .price { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+  <div class="container">
+    <a class="navbar-brand" href="#">Django ecommerce website</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Profile</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Orders</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Request Refund</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Logout</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Cart 🛒</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Products -->
+<div class="container">
+    <h2 class="product-title">PRODUCTS</h2>
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-md-3">
+            <div class="card text-center shadow-sm">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                {% else %}
+                    <img src="https://via.placeholder.com/250x220.png?text=No+Image" class="card-img-top" alt="No Image">
+                {% endif %}
+                <div class="card-body">
+                    <h6 class="card-title">{{ product.name }}</h6>
+                    <p class="price">{{ product.price }} $</p>
+                    <a href="#" class="btn btn-primary">View details</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
