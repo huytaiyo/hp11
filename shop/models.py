@@ -4,6 +4,7 @@ from django.utils.text import slugify
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
+    image_url = models.URLField(blank=True, help_text='URL of the category image')
     created_at = models.DateTimeField(auto_now_add=True)
     
 
@@ -31,6 +32,8 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     image_url = models.URLField(blank=True, help_text='URL of the product image')
+    color_options = models.CharField(max_length=200, blank=True, help_text='Comma-separated color options')
+    specifications = models.TextField(blank=True, help_text='Product specifications in detail')
 
     class Meta:
         verbose_name = 'San pham'
@@ -41,6 +44,13 @@ class Product(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+    
+    @property
+    def color_list(self):
+        """Return a list of color options."""
+        if not self.color_options:
+            return []
+        return [s.strip() for s in self.color_options.split(',') if s.strip()]
         
     def __str__(self):
         return self.name
