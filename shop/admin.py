@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product
+from .models import Category, Product, Banner
 from django.utils.html import format_html
 
 @admin.register(Category)
@@ -38,3 +38,16 @@ class ProductAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('created_at', 'updated_at')
+    
+@admin.register(Banner)
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ('title', 'is_active', 'is_featured', 'created_at', 'image_preview', 'discount_info')
+    list_filter = ('is_active', 'is_featured')
+    search_fields = ('title', 'discount_info')
+    fields = ('title', 'image_url', 'link', 'is_active', 'is_featured', 'discount_info')
+    
+    def image_preview(self, obj):
+        if obj.image_url:
+            return format_html('<img src="{}" style="height:50px;width:100px;object-fit:cover;border-radius:4px;" />', obj.image_url)
+        return "No Image"
+    image_preview.short_description = 'Image Preview'
