@@ -23,6 +23,7 @@ from shop import views as shop_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path ('', include('shop.urls')),
+    path ('accounts/logout/', shop_views.logout_view, name='logout'),
     path ('accounts/register/', shop_views.register_view, name='register'),
     path ('accounts/', include('django.contrib.auth.urls')),
     path ('', include('shop.urls')),

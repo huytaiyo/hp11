@@ -1,10 +1,11 @@
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.db.utils import OperationalError, ProgrammingError
 from django.utils import timezone
+from decimal import Decimal
 
 from .forms import RegisterForm
 from .models import Product, Category, Banner
@@ -77,7 +78,127 @@ def home_view(request):
     }
     return render(request, 'shop/home.html', context)
 
+def _effective_price(product: Product):
+    try:
+        if getattr(product, 'flash_sale_price', Flase) and getattr(product, 'flash_sale_price', None):
+            return product.flash_sale_price
+    except Exception:
+        pass
+    return product.price
 
+CART_SESSION_KEY = 'cart'
+
+def _get_cart(session):
+    return session.get(CART_SESSION_KEY, {})
+def _save_cart(session, cart):
+    session[CART_SESSION_KEY] = cart
+    session.modified = True
+    
+def add_to_cart(request, product_id):
+    if request.method != 'POST':
+        return redirect('product_detail' , slug=get_object_or_404(Product, id=product_id).slug)
+    product = get_object_or_404(Product, id=product_id, is_active=True)
+    try:
+        qty = int(request.POST.get('qty', '1'))
+    except ValueError:
+        qty = 1
+    qty = max(1, min(qty, 999))
+    
+    if product.stock is not None and product.stock<=0:
+        messages.error(request, 'Sản phẩm hiện đã hết hàng.')
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or '/'
+        return redirect(next_url)
+    
+    cart = _get_cart(request.session)
+    key = str(product.id)
+    current = int(cart.get(key, 0))
+    max_allowed = int(product.stock) if product.stock is not None else 9999
+    new_qty = min(current + qty, max_allowed, 999)
+    cart[key] = new_qty
+    _save_cart(request.session, cart)
+    if new_qty < current + qty:
+        messages.warning(request, f'Số lượng sản phẩm trong giỏ đã đạt tối đa ({max_allowed}).')
+    else:
+        messages.success(request, f'Đã thêm {new_qty - current} x "{product.name}" vào giỏ hàng.')
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or '/'
+    return redirect(next_url)
+
+def cart_view(request):
+    cart = _get_cart(request.session)
+    items = []
+    total = Decimal('0')
+    if cart:
+        # Fetch products in one query
+        ids = [int(i) for i in cart.keys()]
+        products = {p.id: p for p in Product.objects.filter(id__in=ids)}
+        for sid, qty in cart.items():
+            pid = int(sid)
+            p = products.get(pid)
+            if not p:
+                continue
+            unit_price = _effective_price(p) or Decimal('0')
+            subtotal = unit_price * int(qty)
+            total += subtotal
+            is_discounted = bool(getattr(p, 'is_in_flash_sale', False) and getattr(p, 'flash_sale_price', None))
+            items.append({
+                'product': p,
+                'qty': int(qty),
+                'unit_price': unit_price,
+                'orig_price': p.price,
+                'is_discounted': is_discounted,
+                'subtotal': subtotal,
+            })
+    context = {
+        'items': items,
+        'total': total,
+    }
+    return render(request, 'shop/cart.html', context)
+
+def update_cart(request, product_id):
+    if request.method != 'POST':
+        return redirect('cart')
+    try:
+        qty = int(request.POST.get('qty', '1'))
+    except ValueError:
+        qty = 1
+    qty = max(0, min(qty, 999))
+    cart = _get_cart(request.session)
+    key = str(int(product_id))
+    
+    product = Product.objects.filter(id=product_id, is_active=True).first()
+    if not product:
+        cart.pop(key, None)
+        _save_cart(request.session, cart)
+        messages.error(request, 'Sản phẩm không tồn tại.')
+        return redirect('cart')
+    
+    if qty <= 0:
+        cart.pop(key, None)
+        messages.info(request, f'Đã xóa "{product.name}" khỏi giỏ hàng.')
+    else:
+        max_allowed = int(product.stock) if product.stock is not None else 9999
+        if product.stock is not None and product.stock<=0:
+            cart.pop(key, None)
+            messages.error(request, 'Sản phẩm hiện đã hết hàng.')
+        else:
+            if qty > max_allowed:
+                qty = max_allowed
+                messages.warning(request, f'Số lượng sản phẩm trong giỏ đã đạt tối đa ({max_allowed}).')
+                cart[key] = qty
+    _save_cart(request.session, cart)
+    return redirect('cart_view')
+
+def remove_from_cart(request, product_id):
+    cart = _get_cart(request.session)
+    cart.pop(str(int(product_id)), None)
+    _save_cart(request.session, cart)
+    return redirect('cart_view')
+
+def clear_cart(request):
+    _save_cart(request.session, {})
+    return redirect('cart_view')
+                            
+                   
 def product_detail_view(request, slug):
     product = get_object_or_404(Product, slug=slug, is_active=True)
     # Gợi ý sản phẩm cùng danh mục (nếu có)
@@ -88,6 +209,13 @@ def product_detail_view(request, slug):
     }
     return render(request, 'shop/product_detail.html', context)
 
+def logout_view(request):
+    if request.method in ('POST', 'GET'):
+        auth_logout(request)
+        messages.info(request, 'Bạn đã đăng xuất thành công.')
+        return redirect('login')
+    return redirect('home')
+    
 
 def register_view(request):
     if request.user.is_authenticated:
