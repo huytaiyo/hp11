@@ -1,53 +1,67 @@
 from django.contrib import admin
-from .models import Category, Product, Banner
 from django.utils.html import format_html
+from .models import Category, Product, Banner, Order, OrderItem
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'created_at')
-    prepopulated_fields = {'slug': ('name',)}
+    list_display = ('name', 'slug', 'image_preview', 'created_at')
+    prepopulated_fields = {"slug": ("name",)}
     search_fields = ('name',)
     fields = ('name', 'slug', 'image_url')
-    
+
     def image_preview(self, obj):
         if obj.image_url:
-            return format_html('<img src="{}" style="height:31px;width:32px;object-fit:cover;border-radius:4px;" />', obj.image_url)
-        return "No Image"
-    image_preview.short_description = 'Image_Preview'
-    
+            return format_html('<img src="{}" style="height:32px;width:32px;object-fit:cover;border-radius:4px;"/>', obj.image_url)
+        return '(no image)'
+    image_preview.short_description = 'Ảnh'
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'stock', 'is_active', 'created_at')
+    list_display = ('name', 'category', 'price', 'flash_sale_price', 'stock', 'is_active', 'created_at')
     list_filter = ('is_active', 'category')
-    search_fields = ('name', 'description')
-    prepopulated_fields = {'slug': ('name',)}
-    fieldssets = (
-        (None, {
-            'fields': ('name', 'slug', 'category', 'description', 'price', 'stock', 'is_active', 'image_url', 'color_options', 'specifications')
+    search_fields = ('name', 'description', 'color_options', 'specifications')
+    prepopulated_fields = {"slug": ("name",)}
+    fieldsets = (
+        ('Thông tin cơ bản', {
+            'fields': ('name', 'slug', 'category', 'price', 'is_active')
         }),
-        ('image, storge', {
-            'fields': ('image_url','stock'),
+        ('Flash Sale', {
+            'fields': ('flash_sale_price', 'flash_sale_start', 'flash_sale_end', 'flash_sale_stock')
         }),
-        ('mota & thuoc tinh',{
-            'fields': ('description', 'color_options', 'specifications'),
+        ('Hình ảnh & Kho', {
+            'fields': ('image_url', 'stock')
         }),
-        ('Timestamps', {
+        ('Mô tả & Thuộc tính', {
+            'fields': ('description', 'color_options', 'specifications')
+        }),
+        ('Thời gian', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',),
         }),
     )
     readonly_fields = ('created_at', 'updated_at')
-    
+
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ('title', 'is_active', 'is_featured', 'created_at', 'image_preview', 'discount_info')
-    list_filter = ('is_active', 'is_featured')
+    list_display = ('title', 'image_preview', 'is_featured', 'discount_info', 'is_active', 'order', 'created_at')
+    list_filter = ('is_featured', 'is_active')
     search_fields = ('title', 'discount_info')
-    fields = ('title', 'image_url', 'link', 'is_active', 'is_featured', 'discount_info')
-    
+    fields = ('title', 'image_url', 'link', 'is_featured', 'discount_info', 'is_active', 'order')
+
     def image_preview(self, obj):
         if obj.image_url:
-            return format_html('<img src="{}" style="height:50px;width:100px;object-fit:cover;border-radius:4px;" />', obj.image_url)
-        return "No Image"
-    image_preview.short_description = 'Image Preview'
+            return format_html('<img src="{}" style="height:64px;width:120px;object-fit:cover;border-radius:4px;"/>', obj.image_url)
+        return '(no image)'
+    image_preview.short_description = 'Ảnh banner'
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'customer_name', 'phone', 'total_amount', 'payment_method', 'status', 'created_at')
+    list_filter = ('status', 'payment_method')
+    search_fields = ('customer_name', 'phone', 'address')
+    readonly_fields = ('created_at',)
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order', 'product_name', 'quantity', 'unit_price', 'line_total')
+    search_fields = ('product_name',)

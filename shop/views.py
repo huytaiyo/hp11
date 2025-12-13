@@ -7,8 +7,8 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.utils import timezone
 from decimal import Decimal
 
-from .forms import RegisterForm
-from .models import Product, Category, Banner
+from .forms import RegisterForm , CheckoutForm
+from .models import Product, Category, Banner , Order , OrderItem
 
 
 def home_view(request):
@@ -234,3 +234,68 @@ def register_view(request):
         form = RegisterForm()
 
     return render(request, 'registration/register.html', {'form': form})
+
+
+def checkout_view(request):
+    cart  =  _get_cart(request.session)
+    if not cart:
+        messages.warning(request, 'Giỏ hàng của bạn đang trống.')
+        return redirect('cart_view')
+    
+    items = []
+    total = Decimal('0')
+    ids = [int(i) for i in cart.keys()]
+    products = {p.id: p for p in Product.objects.filter(id__in=ids)}
+    for sid, qty in cart.items():
+        pid = int(sid)
+        p = products.get(pid)
+        if not p:
+            continue
+        unit_price = _effective_price(p) or Decimal('0')
+        subtotal = unit_price * int(qty)
+        total += subtotal
+        items.append({
+            'product': p,
+            'qty': int(qty),
+            'unit_price': unit_price,
+            'subtotal': subtotal,
+        })
+        
+    if request.method == 'POST':
+        form = CheckoutForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            if request.user.is_authenticated:
+                order.user = request.user
+            order.total_amount = total
+            order.status = 'new'
+            order.save()
+            # Save order items
+            for item in items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item['product'],
+                    product_name=item['product'].name,
+                    quantity=item['qty'],
+                    unit_price=item['unit_price'],
+                    line_total=item['subtotal'],
+                )
+            # Clear cart
+            _save_cart(request.session, {})
+            messages.success(request, 'Đặt hàng thành công! Cảm ơn bạn đã mua sắm.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Vui lòng kiểm tra lại thông tin.')
+    else:
+        initial ={}
+        if request.user.is_authenticated:
+            initial['customer_name'] = (getattr(request.user, 'get_full_name', lambda: '')() or request.user.username)
+        form = CheckoutForm(initial=initial)
+        
+    context = {
+        'items': items,
+        'total': total,
+        'form': form,
+    }
+    
+    return render(request, 'shop/checkout.html', context)
