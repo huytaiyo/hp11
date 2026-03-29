@@ -1,15 +1,26 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout as auth_logout
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render, redirect, get_object_or_404
+import json
 from django.db.models import Q
 from django.db.utils import OperationalError, ProgrammingError
 from django.utils import timezone
 from decimal import Decimal
 
+POPUP_VERSION = str(timezone.now().timestamp())
+
 from .forms import RegisterForm , CheckoutForm
 from .models import Product, Category, Banner , Order , OrderItem
+from .models import Popup
+from django.shortcuts import render
 
+def home(request):
+    popup = Popup.objects.filter(is_active=True).first()
+    return render(request, "index.html", {
+        "popup": popup
+    })
 
 def home_view(request):
     query = request.GET.get('q', '').strip()
@@ -24,8 +35,43 @@ def home_view(request):
             qs = qs.filter(Q(name__icontains=query) | Q(description__icontains=query))
         if category_slug:
             qs = qs.filter(category__slug=category_slug)
-        products = list(qs[:48])
         categories = list(Category.objects.all())
+
+        if qs.exists():
+            paginator = Paginator(qs.order_by('-created_at'), 10)
+            page_number = request.GET.get('page', 1)
+            try:
+                page_number = int(page_number)
+            except (TypeError, ValueError):
+                page_number = 1
+            if page_number < 1:
+                page_number = 1
+            try:
+                products = paginator.page(page_number)
+            except PageNotAnInteger:
+                products = paginator.page(1)
+            except EmptyPage:
+                products = paginator.page(paginator.num_pages)
+        else:
+            products = []
+
+        if hasattr(products, 'paginator'):
+            home_response = {
+                'page': products.number,
+                'total_pages': products.paginator.num_pages,
+                'product_count': products.paginator.count,
+                'has_next': products.has_next(),
+                'has_previous': products.has_previous(),
+            }
+        else:
+            home_response = {
+                'page': 1,
+                'total_pages': 1,
+                'product_count': len(products),
+                'has_next': False,
+                'has_previous': False,
+            }
+
         # Build category tiles with thumbnail images (prefer category image, then first product image, else fallback)
         categories_tiles = []
         for cat in categories:
@@ -71,10 +117,21 @@ def home_view(request):
         'categories': categories,
         'categories_tiles': categories_tiles,
         'banners': banners,
-'flash_sale_products': flash_sale_products if 'flash_sale_products' in locals() else [],
+        'flash_sale_products': flash_sale_products if 'flash_sale_products' in locals() else [],
         'flash_sale_ends_at': flash_sale_ends_at if 'flash_sale_ends_at' in locals() else None,
         'current_query': query,
         'current_category': category_slug,
+        'popup': Popup.objects.filter(is_active=True).first(),
+        'popup_version': POPUP_VERSION,
+        'home_response': json.dumps({
+            'query': query,
+            'category': category_slug,
+            'page': home_response.get('page'),
+            'total_pages': home_response.get('total_pages'),
+            'product_count': home_response.get('product_count'),
+            'has_next': home_response.get('has_next'),
+            'has_previous': home_response.get('has_previous'),
+        }),
     }
     return render(request, 'shop/home.html', context)
 

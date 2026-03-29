@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Category, Product, Banner, Order, OrderItem
-
+from .models import Popup
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'image_preview', 'created_at')
@@ -14,6 +14,12 @@ class CategoryAdmin(admin.ModelAdmin):
             return format_html('<img src="{}" style="height:32px;width:32px;object-fit:cover;border-radius:4px;"/>', obj.image_url)
         return '(no image)'
     image_preview.short_description = 'Ảnh'
+
+@admin.register(Popup)
+class PopupAdmin(admin.ModelAdmin):
+    list_display = ("title", "product", "is_active")
+    list_editable = ("is_active",)
+    search_fields = ("title", "description", "button_link")
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):

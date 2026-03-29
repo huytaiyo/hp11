@@ -1,6 +1,31 @@
 {% extends 'base.html' %}
 {% block title %}Trang chủ{% endblock %}
 {% block content %}
+{% if popup %}
+<div class="modal fade" id="homePopupModal" data-popup-id="{{ popup.id }}" data-popup-version="{{ popup_version }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content popup-modal-content overflow-hidden border-0">
+      <div class="modal-body p-0">
+        {% if popup.image %}
+          <img src="{{ popup.image }}" alt="{{ popup.title }}" class="img-fluid w-100">
+        {% endif %}
+        <div class="popup-action-wrapper text-center p-3">
+          {% if popup.product %}
+            <a href="{% url 'product_detail' popup.product.slug %}" class="btn btn-danger btn-lg">{{ popup.button_text }}</a>
+          {% elif popup.button_link %}
+            <a href="{{ popup.button_link }}" class="btn btn-danger btn-lg" target="_blank" rel="noopener">{{ popup.button_text }}</a>
+          {% else %}
+            <button type="button" class="btn btn-danger btn-lg" data-bs-dismiss="modal">{{ popup.button_text }}</button>
+          {% endif %}
+          <div class="mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="homePopupNeverShow">Không hiện lại</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 <!-- Banner Carousel -->
 {% if banners %}
 <div id="bannerCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
@@ -153,6 +178,38 @@
         <div class="col-12"><div class="alert alert-info">Chưa có sản phẩm nào. Vào Admin để thêm sản phẩm.</div></div>
       {% endfor %}
     </div>
+
+    {% if products and products.has_other_pages %}
+    <nav aria-label="Trang sản phẩm" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item {% if not products.has_previous %}disabled{% endif %}">
+          {% if products.has_previous %}
+            <a class="page-link" href="?page={{ products.previous_page_number }}{% if current_query %}&q={{ current_query }}{% endif %}{% if current_category %}&cat={{ current_category }}{% endif %}" aria-label="Previous">
+          {% else %}
+            <a class="page-link" href="#" tabindex="-1" aria-disabled="true" aria-label="Previous">
+          {% endif %}
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% for num in products.paginator.page_range %}
+          {% if num >= products.number|add:'-2' and num <= products.number|add:'2' %}
+            <li class="page-item {% if num == products.number %}active{% endif %}">
+              <a class="page-link" href="?page={{ num }}{% if current_query %}&q={{ current_query }}{% endif %}{% if current_category %}&cat={{ current_category }}{% endif %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not products.has_next %}disabled{% endif %}">
+          {% if products.has_next %}
+            <a class="page-link" href="?page={{ products.next_page_number }}{% if current_query %}&q={{ current_query }}{% endif %}{% if current_category %}&cat={{ current_category }}{% endif %}" aria-label="Next">
+          {% else %}
+            <a class="page-link" href="#" tabindex="-1" aria-disabled="true" aria-label="Next">
+          {% endif %}
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+      </ul>
+    </nav>
+    {% endif %}
   </section>
 </div>
 
@@ -179,6 +236,50 @@
   tick();
   setInterval(tick, 1000);
 })();
+
+document.addEventListener('DOMContentLoaded', function() {
+  var popupEl = document.getElementById('homePopupModal');
+  if (!popupEl) return;
+
+  var popupId = popupEl.dataset.popupId;
+  var popupVersion = popupEl.dataset.popupVersion;
+  var storageKey = popupId && popupVersion ? 'homePopupHidden_' + popupId + '_' + popupVersion : null;
+  if (storageKey && sessionStorage.getItem(storageKey)) {
+    return;
+  }
+
+  var popupModal = new bootstrap.Modal(popupEl, { backdrop: true, keyboard: true });
+  popupModal.show();
+
+  function clearModalBodyState() {
+    document.body.classList.remove('modal-open');
+    document.body.style.paddingRight = '';
+    document.body.style.overflow = '';
+    document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+      backdrop.remove();
+    });
+  }
+
+  popupEl.addEventListener('hide.bs.modal', clearModalBodyState);
+  popupEl.addEventListener('hidden.bs.modal', clearModalBodyState);
+
+  var neverShowBtn = document.getElementById('homePopupNeverShow');
+  if (neverShowBtn) {
+    neverShowBtn.addEventListener('click', function() {
+      if (storageKey) {
+        sessionStorage.setItem(storageKey, '1');
+      }
+      popupModal.hide();
+    });
+  }
+
+  try {
+    var homeResponse = JSON.parse('{{ home_response|escapejs }}');
+    console.log('Home response:', homeResponse);
+  } catch (e) {
+    console.error('Failed to parse home_response', e);
+  }
+});
 </script>
 {% endblock %}
 {% endblock %}

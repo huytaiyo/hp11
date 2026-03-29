@@ -2,8 +2,27 @@ from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
 
+User = get_user_model()
+class Popup(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    image = models.URLField()
+    button_text = models.CharField(max_length=100, default="MUA NGAY")
+    button_link = models.URLField(blank=True, null=True)
+    product = models.ForeignKey(
+        'shop.Product',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='popups',
+        help_text='Chọn sản phẩm để chuyển đến khi bấm MUA NGAY'
+    )
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.title
+    
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
