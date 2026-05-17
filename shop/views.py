@@ -137,7 +137,7 @@ def home_view(request):
 
 def _effective_price(product: Product):
     try:
-        if getattr(product, 'flash_sale_price', Flase) and getattr(product, 'flash_sale_price', None):
+        if getattr(product, 'flash_sale_price', False) and getattr(product, 'flash_sale_price', None):
             return product.flash_sale_price
     except Exception:
         pass

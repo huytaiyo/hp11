@@ -23,13 +23,13 @@ class PopupAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'flash_sale_price', 'stock', 'is_active', 'created_at')
-    list_filter = ('is_active', 'category')
+    list_display = ('name', 'category', 'price', 'is_hot', 'is_best_seller', 'is_active', 'created_at')
+    list_filter = ('is_hot', 'is_best_seller', 'is_active', 'category')
     search_fields = ('name', 'description', 'color_options', 'specifications')
     prepopulated_fields = {"slug": ("name",)}
     fieldsets = (
         ('Thông tin cơ bản', {
-            'fields': ('name', 'slug', 'category', 'price', 'is_active')
+            'fields': ('name', 'slug', 'category', 'price', 'is_active', 'is_hot', 'is_best_seller')
         }),
         ('Flash Sale', {
             'fields': ('flash_sale_price', 'flash_sale_start', 'flash_sale_end', 'flash_sale_stock')
@@ -66,6 +66,10 @@ class OrderAdmin(admin.ModelAdmin):
     list_filter = ('status', 'payment_method')
     search_fields = ('customer_name', 'phone', 'address')
     readonly_fields = ('created_at',)
+    radio_fields = {'status': admin.HORIZONTAL, 'payment_method': admin.HORIZONTAL}
+
+    class Media:
+        js = ('js/admin_order.js',)
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):

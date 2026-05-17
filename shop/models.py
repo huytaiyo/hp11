@@ -58,6 +58,8 @@ class Product(models.Model):
     flash_sale_end = models.DateTimeField(null=True, blank=True, help_text='Thời gian kết thúc Flash Sale')
     flash_sale_stock = models.PositiveIntegerField(default=0, help_text='Số lượng dành cho Flash Sale (0 = không giới hạn riêng)')
     is_active = models.BooleanField(default=True)
+    is_hot = models.BooleanField(default=False, help_text='Sản phẩm HOT')
+    is_best_seller = models.BooleanField(default=False, help_text='Sản phẩm bán chạy')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -130,7 +132,7 @@ class Order(models.Model):
     )
     STATUS_CHOICES = (
         ('new', 'Mới'),
-        ('paid', 'Đã thanh toán'),
+        ('paid', 'Xác nhận'),
         ('ship', 'Đang giao'),
         ('done', 'Hoàn tất'),
         ('cancel', 'Hủy'),

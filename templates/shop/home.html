@@ -68,10 +68,12 @@
     <div class="card">
       <div class="card-header fw-bold">Danh mục</div>
       <ul class="list-group list-group-flush">
-        <li class="list-group-item {% if not current_category %}active{% endif %}"><a class="text-decoration-none d-block {% if not current_category %}text-white{% endif %}" href="/">Tất cả</a></li>
+        <li class="list-group-item {% if not current_category %}active{% endif %}">
+          <a class="text-decoration-none d-block {% if not current_category %}text-white{% else %}link-body-emphasis{% endif %}" href="/">Tất cả</a>
+        </li>
         {% for cat in categories %}
           <li class="list-group-item {% if current_category == cat.slug %}active{% endif %}">
-            <a class="text-decoration-none d-block {% if current_category == cat.slug %}text-white{% endif %}" href="/?cat={{ cat.slug }}">{{ cat.name }}</a>
+            <a class="text-decoration-none d-block {% if current_category == cat.slug %}text-white{% else %}link-body-emphasis{% endif %}" href="/?cat={{ cat.slug }}">{{ cat.name }}</a>
           </li>
         {% empty %}
           <li class="list-group-item">Chưa có danh mục</li>
@@ -86,7 +88,7 @@
         <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 row-cols-xl-10 g-2 g-sm-3">
           {% for c in categories_tiles %}
             <div class="col">
-<a href="/?cat={{ c.slug }}" class="text-decoration-none text-dark">
+              <a href="/?cat={{ c.slug }}" class="text-decoration-none text-body">
                 <div class="category-tile text-center p-2 h-100">
                   <div class="category-thumb mx-auto mb-2">
                     <img src="{{ c.image_url }}" alt="{{ c.name }}" class="object-fit-cover rounded-circle">
@@ -123,13 +125,18 @@
         <div id="flash-sale" class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-2 g-sm-3">
           {% for p in flash_sale_products %}
           <div class="col">
-            <a href="{% url 'product_detail' p.slug %}" class="text-decoration-none text-dark">
+            <a href="{% url 'product_detail' p.slug %}" class="text-decoration-none text-body">
               <div class="card h-100 flash-item">
                 <div class="ratio ratio-1x1 bg-light position-relative">
                   {% if p.image_url %}
                     <img src="{{ p.image_url }}" alt="{{ p.name }}" class="object-fit-cover">
                   {% else %}
                     <div class="d-flex align-items-center justify-content-center text-muted">No image</div>
+                  {% endif %}
+                  {% if p.is_hot %}
+                    <div class="product-badge badge-hot">HOT</div>
+                  {% elif p.is_best_seller %}
+                    <div class="product-badge badge-best-seller">Bán chạy</div>
                   {% endif %}
                   {% if p.flash_discount_percent %}
                   <div class="flash-badge">-{{ p.flash_discount_percent }}%</div>
@@ -158,13 +165,18 @@
     <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
       {% for p in products %}
         <div class="col">
-          <a href="{% url 'product_detail' p.slug %}" class="text-decoration-none text-dark">
+          <a href="{% url 'product_detail' p.slug %}" class="text-decoration-none text-body">
             <div class="card h-100 product-card">
-              <div class="ratio ratio-1x1 bg-light">
+              <div class="ratio ratio-1x1 bg-light position-relative">
                 {% if p.image_url %}
                   <img src="{{ p.image_url }}" alt="{{ p.name }}" class="object-fit-cover">
                 {% else %}
                   <div class="d-flex align-items-center justify-content-center text-muted">No image</div>
+                {% endif %}
+                {% if p.is_hot %}
+                  <div class="product-badge badge-hot">HOT</div>
+                {% elif p.is_best_seller %}
+                  <div class="product-badge badge-best-seller">Bán chạy</div>
                 {% endif %}
               </div>
               <div class="card-body">
