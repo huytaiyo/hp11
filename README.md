@@ -1,8 +1,8 @@
-Xin chào thầy/cô và các bạn. Hôm nay em xin trình bày về dự án cá nhân website thương mại điện tử HP11 được xây dựng bằng Django Framework.
-
+Xin chào thầy/cô và các bạn. Hôm nay em xin trình bày về dự án website mua sắm HP12 được xây dựng bằng Django Framework và được lấy cảm hứng từ shoppe.
+Ngoài ra, website còn hỗ trợ chức năng đăng ký và đăng nhập tài khoản cho người dùng. Khi đăng ký, người dùng cần nhập các thông tin cơ bản như tên, email và mật khẩu. Dữ liệu tài khoản sẽ được lưu vào database thông qua hệ thống Authentication có sẵn của Django. Sau khi đăng nhập thành công, người dùng có thể sử dụng các chức năng như thêm sản phẩm vào giỏ hàng và đặt hàng. Chức năng này giúp tăng tính bảo mật, quản lý thông tin khách hàng tốt hơn và tạo trải nghiệm giống các website thương mại điện tử thực tế như Shopee.
 Mục tiêu của dự án là xây dựng một website bán hàng online với các chức năng cơ bản như xem sản phẩm, giỏ hàng và đặt hàng. Đồng thời giúp em thực hành lập trình backend với Django và làm việc với cơ sở dữ liệu.
 
-Khi truy cập website, người dùng có thể xem danh sách sản phẩm gồm hình ảnh, tên và giá bán. Khi chọn sản phẩm, hệ thống sẽ hiển thị thông tin chi tiết như mô tả, hình ảnh và giá sản phẩm.
+Khi truy cập website,người dũng sẽ thấy Trang popup quảng cáo của Shopee được tạo bằng cách kết hợp HTML, CSS và Django đồng thời thu hút người mua. người dùng có thể xem danh sách sản phẩm gồm hình ảnh, tên và giá bán. Khi chọn sản phẩm, hệ thống sẽ hiển thị thông tin chi tiết như mô tả, hình ảnh và giá sản phẩm.
 
 Website cũng hỗ trợ chức năng giỏ hàng, cho phép người dùng thêm, xóa hoặc cập nhật số lượng sản phẩm. Hệ thống sẽ tự động tính tổng tiền cho đơn hàng.
 
